@@ -1,0 +1,3 @@
+g++  -s -pipe -o phylomerge PhyloMerge.cpp -I/usr/local/include  -L. -L/usr/local/lib  -O3 -fopenmp -std=c++0x  -lbpp-phyl -lbpp-seq  	-lbpp-core --static
+
+#g++  -pipe -o phylomerge PhyloMerge.cpp -I/usr/local/include  -L. -L/usr/local/lib  -g -Wall -fopenmp -std=c++0x  -lbpp-phyl -lbpp-seq  	-lbpp-core --static
