@@ -293,6 +293,72 @@ std::string > seqSp)
 }
 
 
+string
+selectSequenceAmongSequences (vector < string > &descendantSequences,
+string critMeth, VectorSiteContainer & seqs,
+string name = "");
+
+void simplifyMultifurcations(TreeTemplate < Node > &tree,
+  std::map < std::string, std::string > &seqSp,
+  string critMeth, 
+  VectorSiteContainer & seqs) {
+ 
+  vector<Node*> nodes = tree.getNodes();
+  for (auto n =nodes.begin(); n!=nodes.end();++n) {
+    if ((*n)->getNumberOfSons() > 2 ) {
+      std::cout << "degree: "<< (*n)->degree() <<std::endl;
+      vector<Node*> sons = (*n)->getSons();
+      std::string species = "";
+      std::vector<std::string> sonSeqs ;
+        for (auto s =sons.begin(); s!=sons.end();++s) {
+                std::cout << "simplifyMultifurcations " <<std::endl;
+
+          if (!(*s)->isLeaf()) {
+          std::cout << "Sorry, cannot handle multifurcations involving inner nodes"<<std::endl; 
+          exit(-1);
+          }
+                          std::cout << "simplifyMultifurcations 2" <<std::endl;
+
+          if (species == "")
+          {
+          species = seqSp.at((*s)->getName() ); 
+          sonSeqs.push_back((*s)->getName() ) ;
+          }
+          else if (species != seqSp.at( (*s)->getName() ) ){
+            std::cout << " Sorry, cannot handle multifurcations involving sequences from different species." <<std::endl;
+            exit(-1);
+          }
+                          std::cout << "simplifyMultifurcations 3" <<std::endl;
+
+          sonSeqs.push_back((*s)->getName() ) ;
+        }
+         //Now we have a multifurcation leading to leaves all from the same species.
+         //We can merge!
+         string seqName = selectSequenceAmongSequences (sonSeqs, critMeth, seqs, species);
+                         std::cout << "simplifyMultifurcations 4" <<std::endl;
+         seqSp[seqName] = species;
+         //Now we remove the sequences from seqs
+         /*for (auto s =sonSeqs.begin(); s!=sonSeqs.end();++s) {
+           seqs.removeSequence( (*s) );
+         }*/
+                         std::cout << "simplifyMultifurcations 5" <<std::endl;
+
+        //and from the tree
+       /* for (size_t i = sons.size()-1; i > 0 ; --i) {
+            (*n)->removeSon(i);
+        }*/
+       (*n)->removeSons();
+                        std::cout << "simplifyMultifurcations 6" <<std::endl;
+        (*n)->setName(seqName);
+      /*  Node* No = new Node(seqName);
+        (*n)->addSon(No);
+        No->setDistanceToFather (0.12345);*/
+    }
+    tree.resetNodesId();    
+  }
+    std::cout << "After removing multifurcations, we have "<<tree.getNumberOfLeaves()<<" leaves." << std::endl;
+return;
+}
 /****************************************************************
  * Annotate all nodes of a tree with taxon names when possible.
  ****************************************************************/
@@ -308,6 +374,7 @@ const std::map < std::string, std::string > &seqSp)
 	//TWO: subtree defined by parent and son 1
 	//THREE: subtree defined by son 0 and son 1.
 
+  
 	postOrderAnnotateNodesWithTaxa (tree, tree.getRootNode (), seqSp);
 
 	//Filling the 2 missing properties at the root
@@ -924,7 +991,7 @@ const VectorSiteContainer & seqs)
 string
 selectSequenceAmongSequences (vector < string > &descendantSequences,
 string critMeth, VectorSiteContainer & seqs,
-string name = "")
+string name )
 {
 	if (critMeth == "length" || critMeth == "length.complete")
 	{
@@ -2495,6 +2562,9 @@ main (int args, char **argv)
 			}
 
 
+			//Check for multifurcations, and remove them
+			simplifyMultifurcations(*tree, seqSp, critMeth, *seqs);
+			
 			//If we want to rearrange the tree on its unsupported branches
 			bool
 				rearrangeTree =
