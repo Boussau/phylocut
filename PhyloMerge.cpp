@@ -306,19 +306,14 @@ void simplifyMultifurcations(TreeTemplate < Node > &tree,
   vector<Node*> nodes = tree.getNodes();
   for (auto n =nodes.begin(); n!=nodes.end();++n) {
     if ((*n)->getNumberOfSons() > 2 ) {
-      std::cout << "degree: "<< (*n)->degree() <<std::endl;
       vector<Node*> sons = (*n)->getSons();
       std::string species = "";
       std::vector<std::string> sonSeqs ;
         for (auto s =sons.begin(); s!=sons.end();++s) {
-                std::cout << "simplifyMultifurcations " <<std::endl;
-
           if (!(*s)->isLeaf()) {
           std::cout << "Sorry, cannot handle multifurcations involving inner nodes"<<std::endl; 
           exit(-1);
           }
-                          std::cout << "simplifyMultifurcations 2" <<std::endl;
-
           if (species == "")
           {
           species = seqSp.at((*s)->getName() ); 
@@ -328,27 +323,22 @@ void simplifyMultifurcations(TreeTemplate < Node > &tree,
             std::cout << " Sorry, cannot handle multifurcations involving sequences from different species." <<std::endl;
             exit(-1);
           }
-                          std::cout << "simplifyMultifurcations 3" <<std::endl;
-
           sonSeqs.push_back((*s)->getName() ) ;
         }
          //Now we have a multifurcation leading to leaves all from the same species.
          //We can merge!
          string seqName = selectSequenceAmongSequences (sonSeqs, critMeth, seqs, species);
-                         std::cout << "simplifyMultifurcations 4" <<std::endl;
          seqSp[seqName] = species;
          //Now we remove the sequences from seqs
          /*for (auto s =sonSeqs.begin(); s!=sonSeqs.end();++s) {
            seqs.removeSequence( (*s) );
          }*/
-                         std::cout << "simplifyMultifurcations 5" <<std::endl;
 
         //and from the tree
        /* for (size_t i = sons.size()-1; i > 0 ; --i) {
             (*n)->removeSon(i);
         }*/
        (*n)->removeSons();
-                        std::cout << "simplifyMultifurcations 6" <<std::endl;
         (*n)->setName(seqName);
       /*  Node* No = new Node(seqName);
         (*n)->addSon(No);
@@ -610,7 +600,7 @@ group (Node * newBrother, Node * cutNode, TreeTemplate < Node > &tree)
  * Simple function to tell whether a node belongs to a given species.
  ****************************************************************/
 bool
-isNodeFromSpecies (Node * node, string species)
+isNodeFromSpecies (const Node * node, const string species)
 {
 	string
 		nodeTaxa1 =
@@ -642,12 +632,12 @@ isNodeFromSpecies (Node * node, string species)
  ****************************************************************/
 
 void
-searchForConnectedComponents (Node * node,
+searchForConnectedComponents ( Node * node,
 vector < vector < Node * > >&connectedNodes,
 const string & species);
 
 void
-findConnectedNodes (Node * node, vector < vector < Node * > >&connectedNodes,
+findConnectedNodes ( Node * node, vector < vector < Node * > >&connectedNodes,
 size_t i, const string species)
 {
 	if (isNodeFromSpecies (node, species))
@@ -720,28 +710,27 @@ const std::map < std::string, std::string > &seqSp)
   bool weHaveDoneARearrangement = false;
 	vector < Node * >nodes = tree.getNodes ();
 	vector < Node * >nodesOfSpecies;
+
 	for (auto node = nodes.begin (); node != nodes.end (); ++node)
 	{
 		if (isNodeFromSpecies (*node, species))
 			nodesOfSpecies.push_back (*node);
-	}
+	}  
 	//Now we have a subset of nodes from species "species".
 	if (nodesOfSpecies.size () == 1) //only one node
 	{
 		return weHaveDoneARearrangement;
 	}
+
 	//Are they all connected?
 	vector < vector < Node * > >connectedNodes;
 	searchForConnectedComponents (tree.getRootNode (), connectedNodes, species);
-
 	//Now connectedNodes contains all connected components
 	if (connectedNodes.size () == 1) //They are all connected, we exit
 	{
 		return weHaveDoneARearrangement;
 	}
 	//Several connected components, we need to see if we can group them.
-
-
 	for (size_t i = 0; i < connectedNodes.size () - 1; ++i)
 	{
 		for (size_t j = i + 1; j < connectedNodes.size (); ++j)
@@ -749,8 +738,8 @@ const std::map < std::string, std::string > &seqSp)
 			if (j != i + 1)
 			{
 
-				//We reroot the tree by a leaf
-				Node *
+				//We reroot the tree by a leaf : NOT SURE WHETHER IT IS USEFUL OR NOT. LEADS TO SEGFAULTS BECAUSE CAN DELETE NODE.
+			/*	Node * 
 					newOutgroup = tree.getLeaves ()[0];
 				tree.newOutGroup (newOutgroup);
 				if (!tree.isRooted ())
@@ -780,12 +769,12 @@ const std::map < std::string, std::string > &seqSp)
 				}
 				else
 				{
-				}
+				}*/
 
 				annotateTreeWithSpecies (tree, seqSp);
 
 			}
-
+			
 			vector < Node * >path =
 				TreeTemplateTools::getPathBetweenAnyTwoNodes (*
 				(connectedNodes[i]
@@ -856,10 +845,9 @@ const std::map < std::string, std::string > &seqSp)
 						if (bootstrap > bootstrapThreshold)
 						{
 							canJoinThem = false;
-							break;
+						//	break; I don't remember why we may want to break here.
 						}
 					}
-
 				}
 			}
 
@@ -885,6 +873,7 @@ const std::map < std::string, std::string > &seqSp)
 			}
 		}
 	}
+
   return weHaveDoneARearrangement;
 }
 
@@ -901,27 +890,34 @@ const double &bootstrapThreshold)
 {
 	std::cout << "Rearranging the tree... "  << std::
 		endl;
+  std::set < string > species;
+  for (auto it = seqSp.begin (); it != seqSp.end (); ++it)
+    {
+      species.insert (it->second);
+    }
+
 	if (!speciesToRefine.empty ())
 	{							 //Then only a few species could be rearranged
 		for (auto it = speciesToRefine.begin (); it != speciesToRefine.end ();
 			++it)
 		{
 			std::cout << "Working with species: " << *it << std::endl;
-			if (*it != "") {
-        bool rearrangementsAreDone = true;
-        while (rearrangementsAreDone) 
-          rearrangementsAreDone = groupSequencesFromSpecies (tree, *it, bootstrapThreshold, seqSp);
+      if (species.find(*it) != species.end() ) 
+      {
+        if (*it != "") {
+          bool rearrangementsAreDone = true;
+          while (rearrangementsAreDone) 
+            rearrangementsAreDone = groupSequencesFromSpecies (tree, *it, bootstrapThreshold, seqSp);
+        }
+      }
+      else {
+        std::cout << "No sequence from species: " << *it << std::endl;
       }
 		}
 
 	}
 	else
 	{							 //all species could be rearranged
-		std::set < string > species;
-		for (auto it = seqSp.begin (); it != seqSp.end (); ++it)
-		{
-			species.insert (it->second);
-		}
 
 		for (auto it = species.begin (); it != species.end (); ++it)
 		{
@@ -2075,7 +2071,7 @@ main (int args, char **argv)
 			   delete treeTemp; */
 			tree = TreeTemplateTools::parenthesisToTree (trees[0], true);
 			//std::cout << TreeTemplateTools::treeToParenthesis (*tree, true) << std::endl;
-			if (tree->getRootNode ()->hasBootstrapValue ()
+	/*		if (tree->getRootNode ()->hasBootstrapValue ()
 				|| tree->getRootNode ()->getSon (0)->hasBootstrapValue ()
 				|| tree->getRootNode ()->getSon (1)->hasBootstrapValue ())
 			{
@@ -2084,7 +2080,7 @@ main (int args, char **argv)
 			else
 			{
 				std::cout << "tree DOES NOT HAVE BOOTSTRAP" << std::endl;
-			}
+			}*/
 			dist = TreeTemplateTools::getDistanceMatrix (*tree);
 
 			//    VectorTools::print(tree->getLeavesNames());
