@@ -1,0 +1,9 @@
+PhyloCut is a program to cut large multigenic families at duplication nodes. It works with gene trees annotated with species IDs and duplication/speciation node annotations.
+
+Command:
+phylocut input.sequence.file=XX.fasta input.tree.file=XX.tree ids.to.cut=XX.id
+
+As you can guess, phylocut takes an alignment (e.g. fasta format), a corresponding gene tree in NHX format, as produced by Phyldog, and a file containing a list of species IDs. These species IDs identify the duplications at which the gene tree should be cut. The format is one id (one number) per line.
+
+
+
