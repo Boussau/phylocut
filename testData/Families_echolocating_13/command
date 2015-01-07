@@ -1,0 +1,1 @@
+../../phylocut input.tree.file=results/alimafft_aTRAM_G00858_Selected_phylomergeMERGED.ReconciledTree input.sequence.file=alimafft_aTRAM_G00858_Selected_phylomergeMERGED.ReconciledTree.fasta
