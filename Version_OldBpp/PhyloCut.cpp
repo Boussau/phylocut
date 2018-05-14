@@ -50,20 +50,22 @@ using namespace std;
 #include <Bpp/App/ApplicationTools.h>
 #include <Bpp/Io/FileTools.h>
 #include <Bpp/Text/TextTools.h>
+#include <Bpp/Numeric/DataTable.h>
+#include <Bpp/Numeric/Random/RandomTools.h>
 
 // From SeqLib:
-//#include <Bpp/Seq/Alphabet.all>
-//#include <Bpp/Seq/Container.all>
-//#include <Bpp/Seq/Io.all>
-#include <Bpp/Seq/Io/BppOAlignmentWriterFormat.h>
+#include <Bpp/Seq/Alphabet.all>
+#include <Bpp/Seq/Container.all>
+#include <Bpp/Seq/Io.all>
 #include <Bpp/Seq/SiteTools.h>
 #include <Bpp/Seq/SequenceTools.h>
 #include <Bpp/Seq/App/SequenceApplicationTools.h>
 
 // From PhylLib:
-#include <Bpp/Phyl/Tree/Tree.h>
-//#include <Bpp/Phyl/Distance.all>
+#include <Bpp/Phyl/Tree.h>
+#include <Bpp/Phyl/Distance.all>
 #include <Bpp/Phyl/App/PhylogeneticsApplicationTools.h>
+#include <Bpp/Phyl/Io/PhylipDistanceMatrixFormat.h>
 #include <Bpp/Phyl/Io/Nhx.h>
 #include <Bpp/Phyl/Io/Newick.h>
 //#include <../../home/boussau/Programs/Boost/boost_1_57_0/boost/concept_check.hpp>
@@ -196,7 +198,7 @@ TreeTemplate<Node>* extractSubtree( TreeTemplate<Node>* tree, std::vector<std::s
  //  std::cout << " names i "<< namesToRemove[i] << " and size: "<< newTree->getNumberOfLeaves() <<std::endl;
    if (newTree->getNumberOfLeaves() > 2)
       removeLeaf ( *newTree, namesToRemove[i] );
-   else
+   else 
      TreeTemplateTools::dropLeaf( *newTree, namesToRemove[i] );
 
 //      TreeTemplateTools::dropLeaf( *newTree, namesToRemove[i] );
@@ -206,10 +208,10 @@ TreeTemplate<Node>* extractSubtree( TreeTemplate<Node>* tree, std::vector<std::s
 }
 
 
-void  cutAtDuplicationNodes(Node* node,
-                            VectorSiteContainer *seqs,
-                            bool cutEverywhere,
-                            std::set<int> spIdsToCut,
+void  cutAtDuplicationNodes(Node* node, 
+                            VectorSiteContainer *seqs, 
+                            bool cutEverywhere, 
+                            std::set<int> spIdsToCut, 
                             std::vector<VectorSiteContainer*>& subAlns
                            ) {
 
@@ -226,7 +228,7 @@ void  cutAtDuplicationNodes(Node* node,
         }
 
         if (weCut) {
-					std::cout << "Cutting at node from species " << TextTools::toInt ( (dynamic_cast<const BppString*>(node->getNodeProperty( "S" ) ) )->toSTL() ) << std::endl;
+
           //Create an alignment for each subtree
           Node* son0 = node->getSon (0);
           Node* son1 = node->getSon (1);
@@ -268,17 +270,17 @@ void  cutAtDuplicationNodes(Node* node,
         }
       }
     return;
-
+   
 }
 
 
 
 
-void  cutAtDuplicationNodes(TreeTemplate<Node>* tree,
-                            VectorSiteContainer *seqs,
-                            bool cutEverywhere,
-                            std::set<int> spIdsToCut,
-                            std::string seqName,
+void  cutAtDuplicationNodes(TreeTemplate<Node>* tree, 
+                            VectorSiteContainer *seqs, 
+                            bool cutEverywhere, 
+                            std::set<int> spIdsToCut, 
+                            std::string seqName, 
                             std::string  treeName
                            ) {
 
@@ -287,7 +289,7 @@ void  cutAtDuplicationNodes(TreeTemplate<Node>* tree,
    subAlns.push_back(seqs);
 
    cutAtDuplicationNodes(root, subAlns[0], cutEverywhere, spIdsToCut, subAlns);
-   //Now we have a list of subalignments that we need to write to file,
+   //Now we have a list of subalignments that we need to write to file, 
    //along with their associated trees.
    string sequenceFormat =  "Fasta";
    BppOAlignmentWriterFormat bppoWriter( 0 );
@@ -311,7 +313,7 @@ void  cutAtDuplicationNodes(TreeTemplate<Node>* tree,
 
             newTree = tree->clone();
           }
-
+          
           if (newTree->getNumberOfLeaves() > 1 && newTree->getNumberOfLeaves() < tree->getNumberOfLeaves()) {
           std::string treeFilePath = treeName + TextTools::toString(i);
           out.open (treeFilePath.c_str(), std::ios::out);
@@ -319,16 +321,16 @@ void  cutAtDuplicationNodes(TreeTemplate<Node>* tree,
           out.close();
           }
           else {
-                   //  std::cout << "Do nothing." <<std::endl;
+                   //  std::cout << "Do nothing." <<std::endl; 
           }
         }
         else{
-        // std::cout << "No sequence in the alignment." <<std::endl;
+        // std::cout << "No sequence in the alignment." <<std::endl; 
         }
 
     }
   }
-
+   
 }
 
 
@@ -427,11 +429,11 @@ main (int args, char **argv)
 				 */
 				std::ifstream inSpSeq (speciesFile.c_str ());
 				std::string line;
-
+        
 				while (getline (inSpSeq, line))
 				{
           string temp = TextTools::removeSurroundingWhiteSpaces(line);
-          if (TextTools::isDecimalInteger(temp) ) {
+          if (TextTools::isDecimalInteger(temp) ) {  
             spIdsToCut.insert( TextTools::toInt( temp ) );
           }
           else {
@@ -457,8 +459,8 @@ main (int args, char **argv)
 			//Now we do the actual cutting.
 			cutAtDuplicationNodes(tree, seqs, cutEverywhere, spIdsToCut, seqName, treeName);
 
-			vector < string > seqNames = seqs->getSequencesNames ();
-
+			vector < string > seqNames = seqs->getSequencesNames ();	
+		
 
 		delete tree;
 		delete seqs;
@@ -476,3 +478,4 @@ main (int args, char **argv)
 
 	return 0;
 }
+
